@@ -1,232 +1,496 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt">
 <head>
-  <meta charset="UTF-8">
-  <title>Minha App - Firebase Like API</title>
-  <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui; }
-    body { background: #0f0f23; color: #fff; padding: 20px; }
-    .container { max-width: 800px; margin: 0 auto; }
-    h1 { color: #00d4aa; margin-bottom: 20px; }
-    .card { background: #1a1a2e; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
-    input, button { padding: 10px 15px; border-radius: 8px; border: none; margin: 5px; }
-    input { background: #16213e; color: #fff; width: 200px; }
-    button { background: #00d4aa; color: #0f0f23; cursor: pointer; font-weight: bold; }
-    button:hover { background: #00b894; }
-    .tarefa { background: #16213e; padding: 15px; border-radius: 8px; margin: 10px 0; display: flex; justify-content: space-between; align-items: center; }
-    .tarefa.concluida { opacity: 0.5; text-decoration: line-through; }
-    .badge { background: #e74c3c; padding: 4px 10px; border-radius: 20px; font-size: 12px; }
-    .badge.alta { background: #e74c3c; }
-    .badge.media { background: #f39c12; }
-    .badge.baixa { background: #27ae60; }
-    #status { position: fixed; top: 20px; right: 20px; padding: 10px 20px; border-radius: 20px; font-size: 14px; }
-    #status.online { background: #27ae60; }
-    #status.offline { background: #e74c3c; }
-    .hidden { display: none; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Madrassa Online Islam Moçambique</title>
+    <script src="https://meet.jit.si/external_api.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0d4a2e 0%, #1a6b3a 50%, #0d4a2e 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            padding: 15px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid #c9a84c;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: #c9a84c;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+
+        .logo-text h1 {
+            font-size: 1.4rem;
+            color: #c9a84c;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .logo-text p {
+            font-size: 0.8rem;
+            color: #ddd;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 25px;
+        }
+
+        .nav-links a {
+            color: #fff;
+            text-decoration: none;
+            font-size: 0.95rem;
+            padding: 8px 16px;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            background: #c9a84c;
+            color: #0d4a2e;
+            font-weight: bold;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 60px 20px 40px;
+        }
+
+        .hero h2 {
+            font-size: 2.5rem;
+            color: #c9a84c;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+            max-width: 700px;
+            margin: 0 auto 30px;
+            color: #e0e0e0;
+            line-height: 1.7;
+        }
+
+        .btn-entrar {
+            background: linear-gradient(45deg, #c9a84c, #e8c96a);
+            color: #0d4a2e;
+            border: none;
+            padding: 15px 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(201, 168, 76, 0.4);
+        }
+
+        .btn-entrar:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(201, 168, 76, 0.6);
+        }
+
+        /* Video Section */
+        .video-section {
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .video-container {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 2px solid #c9a84c;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        #meet {
+            width: 100%;
+            height: 600px;
+            background: #1a1a2e;
+        }
+
+        /* Info Cards */
+        .info-section {
+            padding: 50px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .info-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            border: 1px solid rgba(201, 168, 76, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .info-card:hover {
+            transform: translateY(-5px);
+            border-color: #c9a84c;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .info-card .icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+
+        .info-card h3 {
+            color: #c9a84c;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .info-card p {
+            color: #ccc;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* Admins Section */
+        .admins-section {
+            padding: 40px 20px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.2);
+            margin-top: 30px;
+        }
+
+        .admins-section h3 {
+            color: #c9a84c;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+
+        .admin-tags {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .admin-tag {
+            background: rgba(201, 168, 76, 0.2);
+            border: 1px solid #c9a84c;
+            padding: 10px 25px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+        }
+
+        .admin-tag .crown {
+            font-size: 1.2rem;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px;
+            background: rgba(0, 0, 0, 0.4);
+            border-top: 1px solid rgba(201, 168, 76, 0.3);
+        }
+
+        .footer p {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        .footer .heart {
+            color: #c9a84c;
+        }
+
+        /* Sala Info */
+        .sala-info {
+            background: rgba(201, 168, 76, 0.15);
+            border: 1px dashed #c9a84c;
+            border-radius: 10px;
+            padding: 15px 25px;
+            margin: 20px auto;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .sala-info span {
+            color: #c9a84c;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                padding: 15px;
+            }
+
+            .hero h2 {
+                font-size: 1.8rem;
+            }
+
+            #meet {
+                height: 400px;
+            }
+
+            .nav-links {
+                gap: 10px;
+            }
+
+            .nav-links a {
+                font-size: 0.85rem;
+                padding: 6px 12px;
+            }
+        }
+
+        /* Loading overlay */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(201, 168, 76, 0.3);
+            border-top-color: #c9a84c;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-overlay p {
+            margin-top: 20px;
+            color: #c9a84c;
+            font-size: 1.1rem;
+        }
+    </style>
+<base target="_blank">
 </head>
 <body>
-  <div id="status" class="offline">● Offline</div>
-  
-  <div class="container">
-    <h1>🔥 Firebase-Like API Demo</h1>
 
-    <!-- LOGIN -->
-    <div id="loginSection" class="card">
-      <h3>🔐 Login</h3>
-      <input type="email" id="email" placeholder="Email" value="joao@email.com">
-      <input type="password" id="password" placeholder="Senha" value="123456">
-      <button onclick="fazerLogin()">Entrar</button>
-      <button onclick="criarConta()">Criar Conta</button>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p>A carregar a sala de vídeo aula...</p>
     </div>
 
-    <!-- APP -->
-    <div id="appSection" class="card hidden">
-      <h3>👤 <span id="userName"></span></h3>
-      <button onclick="sair()">Sair</button>
-      
-      <h3 style="margin-top: 20px;">📝 Nova Tarefa</h3>
-      <input type="text" id="novaTarefa" placeholder="Título da tarefa">
-      <select id="prioridade">
-        <option value="alta">Alta</option>
-        <option value="media" selected>Média</option>
-        <option value="baixa">Baixa</option>
-      </select>
-      <button onclick="adicionarTarefa()">Adicionar</button>
-      
-      <h3 style="margin-top: 20px;">📋 Minhas Tarefas</h3>
-      <div id="listaTarefas"></div>
-    </div>
-  </div>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo-section">
+            <div class="logo-icon">🕌</div>
+            <div class="logo-text">
+                <h1>Madrassa Online Islam</h1>
+                <p>Moçambique</p>
+            </div>
+        </div>
+        <nav class="nav-links">
+            <a href="#" class="active">Início</a>
+            <a href="#video-section">Vídeo Aula</a>
+            <a href="#info-section">Sobre</a>
+            <a href="#admins-section">Administradores</a>
+        </nav>
+    </header>
 
-  <script>
-    const API_URL = 'http://localhost:3000';
-    let token = localStorage.getItem('token');
-    let socket = null;
-    let tarefas = [];
+    <!-- Hero Section -->
+    <section class="hero">
+        <h2>🌙 Bem-vindo à Madrassa Online</h2>
+        <p>Plataforma de ensino islâmico online para a comunidade muçulmana de Moçambique. Participe das nossas videoaulas ao vivo.</p>
+        <div class="sala-info">
+            🎥 Sala: <span>IM.VideoAula</span>
+        </div>
+        <button class="btn-entrar" onclick="entrarSala()">📹 Entrar na Sala de Aula</button>
+    </section>
 
-    // Verificar se já está logado
-    if (token) {
-      document.getElementById('loginSection').classList.add('hidden');
-      document.getElementById('appSection').classList.remove('hidden');
-      carregarUsuario();
-      conectarRealtime();
-      carregarTarefas();
-    }
+    <!-- Video Section -->
+    <section class="video-section" id="video-section">
+        <div class="video-container">
+            <div id="meet"></div>
+        </div>
+    </section>
 
-    async function fazerLogin() {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      
-      const res = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      
-      const data = await res.json();
-      if (data.token) {
-        token = data.token;
-        localStorage.setItem('token', token);
-        document.getElementById('loginSection').classList.add('hidden');
-        document.getElementById('appSection').classList.remove('hidden');
-        document.getElementById('userName').textContent = data.user.displayName || data.user.email;
-        conectarRealtime();
-        carregarTarefas();
-      } else {
-        alert(data.message || 'Erro no login');
-      }
-    }
+    <!-- Info Section -->
+    <section class="info-section" id="info-section">
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="icon">📖</div>
+                <h3>Estudo do Alcorão</h3>
+                <p>Aulas regulares de leitura, memorização e interpretação do Alcorão Sagrado com professores qualificados.</p>
+            </div>
+            <div class="info-card">
+                <div class="icon">🤲</div>
+                <h3>Hadith e Sunnah</h3>
+                <p>Aprenda os ensinamentos do Profeta Muhammad (S.A.W.) através do estudo de Hadith autênticos.</p>
+            </div>
+            <div class="info-card">
+                <div class="icon">🌍</div>
+                <h3>Acesso Gratuito</h3>
+                <p>Plataforma 100% gratuita. Basta clicar em "Entrar na Sala de Aula" para participar das aulas ao vivo.</p>
+            </div>
+            <div class="info-card">
+                <div class="icon">👥</div>
+                <h3>Comunidade</h3>
+                <p>Faça parte de uma comunidade de aprendizado islâmico em crescimento em todo Moçambique.</p>
+            </div>
+            <div class="info-card">
+                <div class="icon">📅</div>
+                <h3>Aulas ao Vivo</h3>
+                <p>Videoaulas em tempo real com interação direta entre professores e alunos através do Jitsi Meet.</p>
+            </div>
+            <div class="info-card">
+                <div class="icon">🔒</div>
+                <h3>Ambiente Seguro</h3>
+                <p>Sala moderada pelos administradores para garantir um ambiente de aprendizado respeitoso e seguro.</p>
+            </div>
+        </div>
+    </section>
 
-    async function criarConta() {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      
-      const res = await fetch(`${API_URL}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, displayName: email.split('@')[0] })
-      });
-      
-      const data = await res.json();
-      if (data.token) {
-        token = data.token;
-        localStorage.setItem('token', token);
-        fazerLogin();
-      } else {
-        alert(data.message || 'Erro no registro');
-      }
-    }
+    <!-- Admins Section -->
+    <section class="admins-section" id="admins-section">
+        <h3>👑 Administradores da Sala</h3>
+        <div class="admin-tags">
+            <div class="admin-tag">
+                <span class="crown">👑</span>
+                <span>Abdullah123</span>
+            </div>
+            <div class="admin-tag">
+                <span class="crown">👑</span>
+                <span>Abdulfatah123</span>
+            </div>
+        </div>
+    </section>
 
-    async function carregarUsuario() {
-      const res = await fetch(`${API_URL}/auth/me`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (data.user) {
-        document.getElementById('userName').textContent = data.user.displayName || data.user.email;
-      }
-    }
+    <!-- Footer -->
+    <footer class="footer">
+        <p>🕌 Madrassa Online Islam Moçambique &copy; 2026</p>
+        <p style="margin-top:8px; font-size:0.8rem;">Desenvolvido com <span class="heart">💚</span> para a Ummah de Moçambique</p>
+    </footer>
 
-    async function adicionarTarefa() {
-      const titulo = document.getElementById('novaTarefa').value;
-      const prioridade = document.getElementById('prioridade').value;
-      
-      if (!titulo) return;
-      
-      await fetch(`${API_URL}/db/tarefas`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ titulo, prioridade, concluida: false })
-      });
-      
-      document.getElementById('novaTarefa').value = '';
-      carregarTarefas();
-    }
+    <script>
+        let api = null;
 
-    async function carregarTarefas() {
-      const res = await fetch(`${API_URL}/db/tarefas?orderBy=prioridade`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      tarefas = data.documents || [];
-      renderizarTarefas();
-    }
+        function entrarSala() {
+            const loading = document.getElementById('loadingOverlay');
+            loading.classList.add('active');
 
-    function renderizarTarefas() {
-      const container = document.getElementById('listaTarefas');
-      container.innerHTML = '';
-      
-      tarefas.forEach(t => {
-        const div = document.createElement('div');
-        div.className = `tarefa ${t.data.concluida ? 'concluida' : ''}`;
-        div.innerHTML = `
-          <div>
-            <strong>${t.data.titulo}</strong>
-            <span class="badge ${t.data.prioridade}">${t.data.prioridade}</span>
-          </div>
-          <div>
-            <button onclick="toggleTarefa('${t.id}', ${!t.data.concluida})">
-              ${t.data.concluida ? '↩️' : '✅'}
-            </button>
-            <button onclick="deletarTarefa('${t.id}')" style="background:#e74c3c">🗑️</button>
-          </div>
-        `;
-        container.appendChild(div);
-      });
-    }
+            const domain = "meet.jit.si";
+            const options = {
+                roomName: "IM.VideoAula",
+                width: "100%",
+                height: "100%",
+                parentNode: document.querySelector('#meet'),
+                configOverwrite: {
+                    startWithAudioMuted: true,
+                    startWithVideoMuted: false,
+                    prejoinPageEnabled: true,
+                },
+                interfaceConfigOverwrite: {
+                    SHOW_JITSI_WATERMARK: false,
+                    SHOW_BRAND_WATERMARK: false,
+                    SHOW_WATERMARK_FOR_GUESTS: false,
+                    DEFAULT_BACKGROUND: '#0d4a2e',
+                    TOOLBAR_BUTTONS: [
+                        'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen',
+                        'fodeviceselection', 'hangup', 'profile', 'chat', 'recording',
+                        'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand',
+                        'videoquality', 'filmstrip', 'feedback', 'stats', 'shortcuts',
+                        'tileview', 'videobackgroundblur', 'download', 'help', 'mute-everyone'
+                    ],
+                },
+                userInfo: {
+                    displayName: "Aluno Madrassa"
+                }
+            };
 
-    async function toggleTarefa(id, concluida) {
-      await fetch(`${API_URL}/db/tarefas/${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ concluida })
-      });
-      carregarTarefas();
-    }
+            try {
+                api = new JitsiMeetExternalAPI(domain, options);
 
-    async function deletarTarefa(id) {
-      await fetch(`${API_URL}/db/tarefas/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      carregarTarefas();
-    }
+                api.addEventListener('videoConferenceJoined', () => {
+                    loading.classList.remove('active');
+                    document.getElementById('video-section').scrollIntoView({ behavior: 'smooth' });
+                });
 
-    function conectarRealtime() {
-      socket = io(API_URL);
-      
-      socket.on('connect', () => {
-        document.getElementById('status').className = 'online';
-        document.getElementById('status').textContent = '● Online';
-        socket.emit('authenticate', token);
-        socket.emit('subscribe', 'tarefas');
-      });
-      
-      socket.on('disconnect', () => {
-        document.getElementById('status').className = 'offline';
-        document.getElementById('status').textContent = '● Offline';
-      });
-      
-      socket.on('collection:change', (event) => {
-        console.log('Mudança detectada:', event);
-        carregarTarefas(); // Recarrega quando algo muda
-      });
-    }
+                api.addEventListener('passwordRequired', () => {
+                    loading.classList.remove('active');
+                    alert('Esta sala pode exigir uma palavra-passe. Contacte os administradores.');
+                });
 
-    function sair() {
-      localStorage.removeItem('token');
-      token = null;
-      if (socket) socket.disconnect();
-      location.reload();
-    }
-  </script>
+            } catch (error) {
+                loading.classList.remove('active');
+                console.error("Erro ao carregar Jitsi:", error);
+                alert('Erro ao carregar a sala. Por favor, recarregue a página e tente novamente.');
+            }
+        }
+
+        // Smooth scroll para links de navegação
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                const href = this.getAttribute('href');
+                if (href.startsWith('#')) {
+                    e.preventDefault();
+                    const target = document.querySelector(href);
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth' });
+                    }
+                }
+            });
+        });
+    </script>
+
 </body>
 </html>
