@@ -3,154 +3,557 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Madrassa Online Islam Moçambique</title>
+    <title>Madrassa I.M - Vídeo Aula</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+    <!-- Jitsi Meet API -->
+    <script src="https://meet.jit.si/external_api.js"></script>
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+        body { font-family: 'Poppins', sans-serif; }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0d4a2e 0%, #1a6b3a 50%, #0d4a2e 100%);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            padding: 20px;
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 50%, #1e3a5f 100%);
         }
 
-        .logo-icon {
-            font-size: 60px;
-            margin-bottom: 15px;
-        }
-
-        h1 {
-            font-size: 1.8rem;
-            color: #c9a84c;
-            text-align: center;
-            margin-bottom: 5px;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
-        }
-
-        .subtitle {
-            font-size: 1rem;
-            color: #ddd;
-            margin-bottom: 40px;
-            text-align: center;
-        }
-
-        .btn-aula {
-            display: block;
-            width: 100%;
-            max-width: 300px;
-            background: linear-gradient(45deg, #c9a84c, #e8c96a);
-            color: #0d4a2e;
-            border: none;
-            padding: 18px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            border-radius: 50px;
-            cursor: pointer;
-            text-decoration: none;
-            text-align: center;
-            box-shadow: 0 4px 20px rgba(201, 168, 76, 0.5);
+        .card-hover {
             transition: all 0.3s ease;
         }
-
-        .btn-aula:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 30px rgba(201, 168, 76, 0.7);
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
         }
 
-        .btn-admin {
-            margin-top: 30px;
-            background: transparent;
-            color: rgba(255,255,255,0.5);
-            border: 1px solid rgba(255,255,255,0.2);
-            padding: 8px 20px;
-            font-size: 0.8rem;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: all 0.3s ease;
+        .pulse-ring {
+            animation: pulse-ring 2s infinite;
         }
 
-        .btn-admin:hover {
-            color: #c9a84c;
-            border-color: #c9a84c;
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
         }
 
-        .admin-panel {
-            display: none;
-            margin-top: 20px;
-            background: rgba(0,0,0,0.5);
-            border: 1px solid #c9a84c;
-            border-radius: 15px;
-            padding: 20px;
-            max-width: 320px;
+        .hidden-section { display: none; }
+        .visible-section { display: block; }
+
+        /* JITSI CONTAINER - TELA GRANDE */
+        #jitsi-container {
             width: 100%;
-            text-align: center;
+            height: calc(100vh - 120px);
+            min-height: 600px;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
         }
 
-        .admin-panel.show {
-            display: block;
+        /* FULLSCREEN MODE */
+        .jitsi-fullscreen #jitsi-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 9999;
+            border-radius: 0;
         }
 
-        .admin-panel h3 {
-            color: #c9a84c;
-            margin-bottom: 15px;
-            font-size: 1rem;
+        .jitsi-fullscreen .jitsi-controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 10000;
         }
 
-        .admin-panel p {
-            color: #ccc;
-            font-size: 0.85rem;
-            margin-bottom: 10px;
-            line-height: 1.5;
-        }
-
-        .admin-panel .senha {
-            background: rgba(201, 168, 76, 0.2);
-            border: 1px dashed #c9a84c;
-            border-radius: 8px;
-            padding: 10px;
-            margin: 8px 0;
-            font-family: monospace;
-            font-size: 0.95rem;
-            color: #e8c96a;
+        @media (max-width: 768px) {
+            #jitsi-container { 
+                height: calc(100vh - 100px);
+                min-height: 400px;
+            }
         }
     </style>
 <base target="_blank">
 </head>
-<body>
+<body class="gradient-bg min-h-screen text-white">
 
-    <div class="logo-icon">🕌</div>
-    <h1>Madrassa Online Islam</h1>
-    <p class="subtitle">Moçambique</p>
+    <!-- NAVBAR -->
+    <nav class="glass sticky top-0 z-50 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center text-xl font-bold">M</div>
+                <h1 class="text-xl font-bold">Madrassa I.M</h1>
+            </div>
+            <div id="nav-buttons" class="flex gap-3">
+                <button onclick="showSection('home')" class="px-4 py-2 rounded-lg hover:bg-white/10 transition">Início</button>
+                <button onclick="showSection('como-funciona')" class="px-4 py-2 rounded-lg hover:bg-white/10 transition">Como Funciona</button>
+                <button onclick="showLoginModal()" class="px-4 py-2 bg-emerald-500 rounded-lg hover:bg-emerald-600 transition font-medium">Entrar na Aula</button>
+            </div>
+        </div>
+    </nav>
 
-    <a class="btn-aula" href="https://meet.jit.si/IM.VideoAula" target="_blank">
-        📹 Vídeo Aulas
-    </a>
+    <!-- SEÇÃO: HOME -->
+    <section id="home" class="visible-section">
+        <!-- HERO -->
+        <div class="max-w-7xl mx-auto px-6 py-20 text-center">
+            <div class="inline-block px-4 py-1 bg-emerald-500/20 rounded-full text-emerald-300 text-sm font-medium mb-6">
+                🎓 Plataforma de Ensino Online
+            </div>
+            <h2 class="text-5xl md:text-6xl font-bold mb-6 leading-tight">
+                Madrassa I.M<br>
+                <span class="text-emerald-400">Vídeo Aula</span>
+            </h2>
+            <p class="text-xl text-gray-300 max-w-2xl mx-auto mb-10">
+                Aulas online ao vivo para todos os alunos. Entra na sala de aula virtual e aprende com os melhores professores.
+            </p>
+            <div class="flex flex-wrap justify-center gap-4">
+                <button onclick="showLoginModal()" class="px-8 py-4 bg-emerald-500 rounded-xl text-lg font-semibold hover:bg-emerald-600 transition card-hover pulse-ring">
+                    🚀 Entrar na Aula Agora
+                </button>
+                <button onclick="showSection('como-funciona')" class="px-8 py-4 glass rounded-xl text-lg font-semibold hover:bg-white/20 transition card-hover">
+                    📖 Como Funciona
+                </button>
+            </div>
+        </div>
 
-    <button class="btn-admin" onclick="toggleAdmin()">⚙️ Administrador</button>
+        <!-- ESTATÍSTICAS -->
+        <div class="max-w-7xl mx-auto px-6 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="glass rounded-2xl p-8 text-center card-hover">
+                    <div class="text-4xl mb-3">🎥</div>
+                    <h3 class="text-2xl font-bold text-emerald-400">Aulas Ao Vivo</h3>
+                    <p class="text-gray-300 mt-2">Videoaulas em tempo real com interação direta</p>
+                </div>
+                <div class="glass rounded-2xl p-8 text-center card-hover">
+                    <div class="text-4xl mb-3">👥</div>
+                    <h3 class="text-2xl font-bold text-emerald-400">Sala Colaborativa</h3>
+                    <p class="text-gray-300 mt-2">Partilha de ecrã, chat e participação ativa</p>
+                </div>
+                <div class="glass rounded-2xl p-8 text-center card-hover">
+                    <div class="text-4xl mb-3">📱</div>
+                    <h3 class="text-2xl font-bold text-emerald-400">Acesso Fácil</h3>
+                    <p class="text-gray-300 mt-2">Entra pelo computador, tablet ou telemóvel</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
-    <div class="admin-panel" id="adminPanel">
-        <h3>🔐 Acesso Administrativo</h3>
-        <p>Sala: <strong>IM.VideoAula</strong></p>
-        <p>Utilize uma das seguintes senhas para entrar como moderador:</p>
-        <div class="senha">Abdullah123</div>
-        <div class="senha">Abdulfatah123</div>
-        <p style="margin-top:10px; font-size:0.75rem; color:#888;">Clique em "Vídeo Aulas" para aceder à sala.</p>
+    <!-- SEÇÃO: COMO FUNCIONA -->
+    <section id="como-funciona" class="hidden-section max-w-5xl mx-auto px-6 py-16">
+        <h2 class="text-4xl font-bold text-center mb-12">📖 Como Funciona a Vídeo Aula</h2>
+
+        <div class="space-y-8">
+            <div class="glass rounded-2xl p-8 flex flex-col md:flex-row gap-6 items-start card-hover">
+                <div class="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center text-2xl font-bold shrink-0">1</div>
+                <div>
+                    <h3 class="text-2xl font-bold text-emerald-400 mb-2">Clica em "Entrar na Aula"</h3>
+                    <p class="text-gray-300">No topo da página ou no botão verde principal, clica para aceder à sala de aula. Não precisas de criar conta!</p>
+                </div>
+            </div>
+
+            <div class="glass rounded-2xl p-8 flex flex-col md:flex-row gap-6 items-start card-hover">
+                <div class="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center text-2xl font-bold shrink-0">2</div>
+                <div>
+                    <h3 class="text-2xl font-bold text-emerald-400 mb-2">Escreve o Teu Nome</h3>
+                    <p class="text-gray-300">Quando a sala abrir, escreve o teu nome para o professor te identificar. Podes usar o teu nome real ou nome de utilizador.</p>
+                </div>
+            </div>
+
+            <div class="glass rounded-2xl p-8 flex flex-col md:flex-row gap-6 items-start card-hover">
+                <div class="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center text-2xl font-bold shrink-0">3</div>
+                <div>
+                    <h3 class="text-2xl font-bold text-emerald-400 mb-2">Permite Câmara e Microfone</h3>
+                    <p class="text-gray-300">O navegador vai pedir permissão para usar a câmara e microfone. Clica em "Permitir" para poderes participar na aula.</p>
+                </div>
+            </div>
+
+            <div class="glass rounded-2xl p-8 flex flex-col md:flex-row gap-6 items-start card-hover">
+                <div class="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center text-2xl font-bold shrink-0">4</div>
+                <div>
+                    <h3 class="text-2xl font-bold text-emerald-400 mb-2">Participa na Aula</h3>
+                    <p class="text-gray-300">Podes ligar/desligar a câmara e microfone, usar o chat para perguntas, e ver a apresentação do professor em partilha de ecrã.</p>
+                </div>
+            </div>
+
+            <div class="glass rounded-2xl p-8 flex flex-col md:flex-row gap-6 items-start card-hover">
+                <div class="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center text-2xl font-bold shrink-0">5</div>
+                <div>
+                    <h3 class="text-2xl font-bold text-emerald-400 mb-2">Dúvidas? Usa o Chat!</h3>
+                    <p class="text-gray-300">Se tiveres alguma dúvida durante a aula, escreve no chat. O professor vai responder quando possível.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-12">
+            <button onclick="showLoginModal()" class="px-8 py-4 bg-emerald-500 rounded-xl text-lg font-semibold hover:bg-emerald-600 transition card-hover">
+                🚀 Quero Experimentar Agora
+            </button>
+        </div>
+    </section>
+
+    <!-- SEÇÃO: SALA DE AULA (JITSI) - TELA GRANDE -->
+    <section id="sala-aula" class="hidden-section">
+        <div class="px-4 py-4">
+            <div class="flex justify-between items-center mb-4 max-w-[1920px] mx-auto">
+                <h2 class="text-xl font-bold">🎓 Sala de Aula - Madrassa I.M</h2>
+                <div class="flex gap-3">
+                    <button onclick="toggleFullscreen()" class="px-4 py-2 bg-blue-500 rounded-lg hover:bg-blue-600 transition text-sm">
+                        🔳 Ecrã Completo
+                    </button>
+                    <button onclick="sairDaAula()" class="px-4 py-2 bg-red-500 rounded-lg hover:bg-red-600 transition text-sm">
+                        🚪 Sair da Aula
+                    </button>
+                </div>
+            </div>
+            <div class="max-w-[1920px] mx-auto">
+                <div id="jitsi-container"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SEÇÃO: PAINEL ADMIN -->
+    <section id="painel-admin" class="hidden-section max-w-7xl mx-auto px-6 py-8">
+        <div class="glass rounded-2xl p-8">
+            <h2 class="text-3xl font-bold text-emerald-400 mb-6">🔐 Painel de Administração</h2>
+            <p class="text-gray-300 mb-6">Bem-vindo, <span id="admin-nome" class="font-bold text-white"></span>! Aqui podes gerir a plataforma.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white/5 rounded-xl p-6">
+                    <h3 class="text-xl font-bold mb-4">📊 Estatísticas da Aula</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-300">Estado da sala:</span>
+                            <span id="estado-sala" class="text-emerald-400 font-medium">Ativa</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-300">Nome da sala:</span>
+                            <span class="text-white font-medium">videoAula</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-300">Link direto:</span>
+                            <a href="https://meet.jit.si/videoAula" target="_blank" class="text-emerald-400 hover:underline">meet.jit.si/videoAula</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white/5 rounded-xl p-6">
+                    <h3 class="text-xl font-bold mb-4">⚙️ Ações</h3>
+                    <div class="space-y-3">
+                        <button onclick="abrirSalaDireta()" class="w-full px-4 py-3 bg-emerald-500 rounded-lg hover:bg-emerald-600 transition text-left">
+                            🚀 Abrir Sala de Aula
+                        </button>
+                        <button onclick="copiarLinkAula()" class="w-full px-4 py-3 bg-blue-500 rounded-lg hover:bg-blue-600 transition text-left">
+                            📋 Copiar Link de Partilha
+                        </button>
+                        <button onclick="logoutAdmin()" class="w-full px-4 py-3 bg-red-500/50 rounded-lg hover:bg-red-500 transition text-left">
+                            🚪 Sair do Painel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MODAL: LOGIN -->
+    <div id="login-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass rounded-2xl p-8 max-w-md w-full">
+            <h3 class="text-2xl font-bold text-center mb-2">Entrar na Aula</h3>
+            <p class="text-gray-300 text-center mb-6">Escolhe como queres aceder</p>
+
+            <div class="space-y-4">
+                <button onclick="entrarComoAluno()" class="w-full px-6 py-4 bg-emerald-500 rounded-xl hover:bg-emerald-600 transition flex items-center gap-3">
+                    <span class="text-2xl">👨‍🎓</span>
+                    <div class="text-left">
+                        <div class="font-bold">Sou Aluno</div>
+                        <div class="text-sm text-emerald-100">Entrar diretamente na aula</div>
+                    </div>
+                </button>
+
+                <button onclick="mostrarLoginAdmin()" class="w-full px-6 py-4 bg-blue-500/80 rounded-xl hover:bg-blue-500 transition flex items-center gap-3">
+                    <span class="text-2xl">👨‍🏫</span>
+                    <div class="text-left">
+                        <div class="font-bold">Sou Professor/Admin</div>
+                        <div class="text-sm text-blue-100">Acesso com PIN</div>
+                    </div>
+                </button>
+            </div>
+
+            <button onclick="fecharLoginModal()" class="w-full mt-4 px-4 py-2 text-gray-400 hover:text-white transition">
+                Cancelar
+            </button>
+        </div>
     </div>
 
-    <script>
-        function toggleAdmin() {
-            document.getElementById('adminPanel').classList.toggle('show');
-        }
-    </script>
+    <!-- MODAL: LOGIN ADMIN -->
+    <div id="admin-login-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass rounded-2xl p-8 max-w-md w-full">
+            <h3 class="text-2xl font-bold text-center mb-2">🔐 Acesso Administrativo</h3>
+            <p class="text-gray-300 text-center mb-6">Introduz as tuas credenciais</p>
 
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm text-gray-300 mb-1">Nome de Administrador</label>
+                    <select id="admin-nome-select" class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white focus:outline-none focus:border-emerald-400">
+                        <option value="" class="text-gray-800">Selecionar...</option>
+                        <option value="Abdullah" class="text-gray-800">Abdullah</option>
+                        <option value="Abdulfatah" class="text-gray-800">Abdulfatah</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-300 mb-1">PIN</label>
+                    <input type="password" id="admin-pin" maxlength="6" placeholder="******" 
+                           class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white text-center text-2xl tracking-widest focus:outline-none focus:border-emerald-400">
+                </div>
+                <button onclick="verificarAdmin()" class="w-full px-6 py-3 bg-emerald-500 rounded-xl hover:bg-emerald-600 transition font-bold">
+                    Entrar
+                </button>
+            </div>
+
+            <p id="erro-login" class="text-red-400 text-center mt-3 hidden">PIN incorreto. Tenta novamente.</p>
+
+            <button onclick="voltarLoginModal()" class="w-full mt-4 px-4 py-2 text-gray-400 hover:text-white transition">
+                ← Voltar
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL: NOME DO ALUNO -->
+    <div id="aluno-nome-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass rounded-2xl p-8 max-w-md w-full">
+            <h3 class="text-2xl font-bold text-center mb-2">👨‍🎓 Bem-vindo!</h3>
+            <p class="text-gray-300 text-center mb-6">Como te chamas?</p>
+
+            <div class="space-y-4">
+                <input type="text" id="aluno-nome-input" placeholder="Escreve o teu nome" 
+                       class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white text-center focus:outline-none focus:border-emerald-400">
+                <button onclick="entrarNaSalaAluno()" class="w-full px-6 py-3 bg-emerald-500 rounded-xl hover:bg-emerald-600 transition font-bold">
+                    Entrar na Aula
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="glass mt-20 py-8 text-center text-gray-400">
+        <p>© 2026 Madrassa I.M - Vídeo Aula. Todos os direitos reservados.</p>
+        <p class="text-sm mt-2">Plataforma de ensino online ao vivo</p>
+    </footer>
+
+    <script>
+        // ========== FIREBASE CONFIG ==========
+        const firebaseConfig = {
+            apiKey: "AIzaSyD2rNS7HSJyek3OCrRquudFgqQSWXZJYrY",
+            authDomain: "madrassa-online-b851c.firebaseapp.com",
+            databaseURL: "https://madrassa-online-b851c-default-rtdb.firebaseio.com",
+            projectId: "madrassa-online-b851c",
+            storageBucket: "madrassa-online-b851c.firebasestorage.app",
+            messagingSenderId: "360782668012",
+            appId: "1:360782668012:web:d501ef187911db632445c9",
+            measurementId: "G-RV9GD4S22T"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // ========== ADMINISTRADORES (ENCRIPTADOS) ==========
+        const ADMINISTRADORES = {
+            "Abdullah": { pin: "123456", id: "admin_001" },
+            "Abdulfatah": { pin: "123456", id: "admin_002" }
+        };
+
+        // Variáveis globais
+        let jitsiApi = null;
+        let adminAtual = null;
+        let nomeAluno = "";
+        let isFullscreen = false;
+
+        // ========== FUNÇÕES DE NAVEGAÇÃO ==========
+        function showSection(sectionId) {
+            document.querySelectorAll('section').forEach(s => {
+                s.classList.remove('visible-section');
+                s.classList.add('hidden-section');
+            });
+            document.getElementById(sectionId).classList.remove('hidden-section');
+            document.getElementById(sectionId).classList.add('visible-section');
+            window.scrollTo(0, 0);
+        }
+
+        // ========== MODAIS ==========
+        function showLoginModal() {
+            document.getElementById('login-modal').classList.remove('hidden');
+        }
+
+        function fecharLoginModal() {
+            document.getElementById('login-modal').classList.add('hidden');
+            document.getElementById('admin-login-modal').classList.add('hidden');
+            document.getElementById('aluno-nome-modal').classList.add('hidden');
+        }
+
+        function mostrarLoginAdmin() {
+            document.getElementById('login-modal').classList.add('hidden');
+            document.getElementById('admin-login-modal').classList.remove('hidden');
+            document.getElementById('erro-login').classList.add('hidden');
+        }
+
+        function voltarLoginModal() {
+            document.getElementById('admin-login-modal').classList.add('hidden');
+            document.getElementById('login-modal').classList.remove('hidden');
+        }
+
+        // ========== LOGIN ADMIN ==========
+        function verificarAdmin() {
+            const nome = document.getElementById('admin-nome-select').value;
+            const pin = document.getElementById('admin-pin').value;
+
+            if (ADMINISTRADORES[nome] && ADMINISTRADORES[nome].pin === pin) {
+                adminAtual = nome;
+                document.getElementById('admin-login-modal').classList.add('hidden');
+                document.getElementById('admin-nome').textContent = nome;
+                showSection('painel-admin');
+
+                db.ref('logs/admin').push({
+                    admin: btoa(nome),
+                    timestamp: Date.now(),
+                    action: 'login'
+                });
+            } else {
+                document.getElementById('erro-login').classList.remove('hidden');
+                document.getElementById('admin-pin').value = '';
+            }
+        }
+
+        function logoutAdmin() {
+            adminAtual = null;
+            showSection('home');
+        }
+
+        // ========== ALUNO ==========
+        function entrarComoAluno() {
+            document.getElementById('login-modal').classList.add('hidden');
+            document.getElementById('aluno-nome-modal').classList.remove('hidden');
+        }
+
+        function entrarNaSalaAluno() {
+            nomeAluno = document.getElementById('aluno-nome-input').value.trim();
+            if (!nomeAluno) {
+                nomeAluno = "Aluno";
+            }
+            document.getElementById('aluno-nome-modal').classList.add('hidden');
+            iniciarJitsi(nomeAluno);
+            showSection('sala-aula');
+        }
+
+        // ========== JITSI MEET - TELA GRANDE ==========
+        function iniciarJitsi(displayName) {
+            const domain = "meet.jit.si";
+            const options = {
+                roomName: "videoAula",
+                width: "100%",
+                height: "100%",
+                parentNode: document.getElementById('jitsi-container'),
+                userInfo: {
+                    displayName: displayName
+                },
+                configOverwrite: {
+                    startWithAudioMuted: true,
+                    startWithVideoMuted: false,
+                    prejoinPageEnabled: false
+                },
+                interfaceConfigOverwrite: {
+                    SHOW_JITSI_WATERMARK: false,
+                    SHOW_BRAND_WATERMARK: false,
+                    DEFAULT_BACKGROUND: "#1e3a5f",
+                    TOOLBAR_BUTTONS: [
+                        'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen',
+                        'fodeviceselection', 'hangup', 'profile', 'chat', 'recording',
+                        'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand',
+                        'videoquality', 'filmstrip', 'feedback', 'stats', 'shortcuts',
+                        'tileview', 'videobackgroundblur', 'download', 'help', 'mute-everyone'
+                    ]
+                }
+            };
+
+            if (jitsiApi) {
+                jitsiApi.dispose();
+            }
+
+            jitsiApi = new JitsiMeetExternalAPI(domain, options);
+
+            jitsiApi.addEventListener('videoConferenceLeft', function() {
+                sairDaAula();
+            });
+        }
+
+        function toggleFullscreen() {
+            const container = document.getElementById('jitsi-container');
+            const section = document.getElementById('sala-aula');
+
+            if (!document.fullscreenElement) {
+                if (container.requestFullscreen) {
+                    container.requestFullscreen();
+                } else if (container.webkitRequestFullscreen) {
+                    container.webkitRequestFullscreen();
+                } else if (container.msRequestFullscreen) {
+                    container.msRequestFullscreen();
+                }
+                isFullscreen = true;
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+                isFullscreen = false;
+            }
+        }
+
+        function sairDaAula() {
+            if (jitsiApi) {
+                jitsiApi.dispose();
+                jitsiApi = null;
+            }
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            }
+            showSection('home');
+        }
+
+        // ========== FUNÇÕES ADMIN ==========
+        function abrirSalaDireta() {
+            iniciarJitsi(adminAtual || "Professor");
+            showSection('sala-aula');
+        }
+
+        function copiarLinkAula() {
+            const link = "https://meet.jit.si/videoAula";
+            navigator.clipboard.writeText(link).then(() => {
+                alert("✅ Link copiado: " + link);
+            });
+        }
+
+        // Fechar modais ao clicar fora
+        window.onclick = function(event) {
+            if (event.target.classList.contains('fixed')) {
+                event.target.classList.add('hidden');
+            }
+        };
+    </script>
 </body>
 </html>
