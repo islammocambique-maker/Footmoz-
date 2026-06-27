@@ -389,6 +389,7 @@ document.getElementById('page-home').classList.add('hidden');
 document.getElementById('page-sala').classList.remove('hidden');
 
 if (souProfessor) {
+console.log('👨‍🏫 MODO PROFESSOR ativado');
 document.getElementById('prof-name').textContent = meuNome;
 document.getElementById('btn-record').classList.remove('hidden');
 camOn = true;
@@ -406,6 +407,7 @@ sairDaSala(); return;
 }
 } else {
 // ALUNO
+console.log('👨‍🎓 MODO ALUNO ativado');
 document.getElementById('prof-name').textContent = "Professor";
 document.getElementById('btn-record').classList.add('hidden');
 camOn = true; // Aluno também pode ligar câmara
@@ -426,6 +428,15 @@ console.log("Sem permissões");
 }
 
 updateMicButton(); updateCamButton();
+
+// Log participantes existentes
+const snapExistentes = await SALA_REF.child('participants').once('value');
+console.log('👥 Participantes existentes na sala:', snapExistentes.numChildren());
+snapExistentes.forEach(child => {
+  if (child.key !== minhaId) {
+    console.log('  →', child.val().nome, '(Professor:', child.val().isProfessor + ')');
+  }
+});
 
 // Registrar na sala
 await SALA_REF.child('participants/' + minhaId).set({
@@ -456,7 +467,7 @@ const peerId = snapshot.key;
 const data = snapshot.val();
 if (peerId === minhaId) return;
 
-console.log("Novo participante:", data.nome, "(Professor:", data.isProfessor + ")");
+console.log('👤 Novo participante:', data.nome, 'Professor?', data.isProfessor);
 
 // Criar elemento de vídeo para este participante
 if (!data.isProfessor) {
@@ -507,17 +518,33 @@ atualizarListaParticipantes();
 
 // ========== CRIAR/REMOVER VÍDEO DE ALUNO ==========
 function criarVideoAluno(peerId, nome) {
-if (document.getElementById('video-container-' + peerId)) return;
+if (document.getElementById('video-container-' + peerId)) {
+  console.log('⚠️ Vídeo do aluno já existe:', peerId);
+  return;
+}
 
-const container = document.createElement('div');
-container.id = 'video-container-' + peerId;
-container.className = 'video-card aspect-video relative';
-container.innerHTML = `
-<video id="video-${peerId}" autoplay playsinline class="w-full h-full object-cover" style="transform: scaleX(-1);"></video>
-<div class="video-label">👤 ${nome}</div>
-<div id="muted-${peerId}" class="video-muted hidden">🔇</div>
-`;
-document.getElementById('alunos-grid').appendChild(container);
+// Buscar nome real do participante se disponível
+SALA_REF.child('participants/' + peerId + '/nome').once('value').then(snap => {
+  const nomeReal = snap.val() || nome || 'Aluno';
+  const container = document.createElement('div');
+  container.id = 'video-container-' + peerId;
+  container.className = 'video-card aspect-video relative';
+  container.style.minHeight = '120px';
+  container.style.background = '#0f172a';
+  container.innerHTML = `
+  <video id="video-${peerId}" autoplay playsinline muted class="w-full h-full object-cover" style="transform: scaleX(-1); min-height:120px;"></video>
+  <div class="video-label">👤 ${nomeReal}</div>
+  <div id="muted-${peerId}" class="video-muted hidden">🔇</div>
+  <div id="loading-${peerId}" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#10b981; font-size:12px;">⏳ A ligar...</div>
+  `;
+  document.getElementById('alunos-grid').appendChild(container);
+  console.log('📺 Vídeo do aluno CRIADO:', peerId, 'nome:', nomeReal);
+  logDebug('📺 Aluno ' + nomeReal + ' adicionado à grid', 'ok');
+
+  // Verificar se grid está visível
+  const grid = document.getElementById('alunos-grid');
+  console.log('📐 Grid visível?', grid.children.length, 'filhos');
+});
 }
 
 function removerVideoAluno(peerId) {
@@ -569,7 +596,7 @@ pc.addTrack(track, localStream);
 
 // Receber stream remoto
 pc.ontrack = (event) => {
-console.log("Track recebida de:", peerId, "kind:", event.track.kind);
+console.log('📡 Track recebida de:', peerId, 'tipo:', event.track.kind);
 const stream = event.streams[0];
 if (stream) {
 if (isPeerProfessor) {
@@ -620,26 +647,53 @@ console.log("Criando peer para receber sinal de:", fromId);
 const snap = await SALA_REF.child('participants/' + fromId).once('value');
 const data = snap.val() || {};
 await iniciarConexao(fromId, data.isProfessor);
+// Aguardar um pouco para a conexão ser estabelecida
+await new Promise(r => setTimeout(r, 500));
 }
 
 const pc = peers[fromId];
+if (!pc) {
+console.error("Peer não encontrado para:", fromId);
+return;
+}
 
 if (signal.type === 'offer') {
-console.log("Recebendo offer de:", fromId);
+console.log('📥 Recebendo OFFER de:', fromId);
+try {
+if (pc.signalingState === 'stable' || pc.signalingState === 'have-local-offer') {
 await pc.setRemoteDescription(new RTCSessionDescription(signal.sdp));
 const answer = await pc.createAnswer();
 await pc.setLocalDescription(answer);
-console.log("Enviando answer para:", fromId);
+console.log('📤 Enviando ANSWER para:', fromId);
 enviarSinal(fromId, { type: 'answer', sdp: answer });
+} else {
+console.log("Ignorando offer, estado:", pc.signalingState);
+}
+} catch (err) {
+console.error("Erro ao processar offer:", err);
+}
 } 
 else if (signal.type === 'answer') {
-console.log("Recebendo answer de:", fromId);
+console.log('📥 Recebendo ANSWER de:', fromId);
+try {
+if (pc.signalingState === 'have-local-offer') {
 await pc.setRemoteDescription(new RTCSessionDescription(signal.sdp));
+console.log("Answer aplicada com sucesso para:", fromId);
+} else {
+console.log("Ignorando answer, estado:", pc.signalingState);
+}
+} catch (err) {
+console.error("Erro ao processar answer:", err);
+}
 }
 else if (signal.type === 'ice') {
 console.log("Recebendo ICE de:", fromId);
 try {
+if (pc.remoteDescription) {
 await pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
+} else {
+console.log("ICE candidate guardado para depois");
+}
 } catch (e) {
 console.error("Erro ao adicionar ICE:", e);
 }
@@ -862,6 +916,66 @@ isRecording = false;
 window.onclick = function(e) {
 if (e.target.classList.contains('fixed')) { e.target.classList.add('hidden'); e.target.classList.remove('flex'); }
 };
+
+// ========== DEBUG VISUAL ==========
+let debugAtivo = false;
+function toggleDebug() {
+  const panel = document.getElementById('debug-panel');
+  debugAtivo = !debugAtivo;
+  panel.style.display = debugAtivo ? 'block' : 'none';
+}
+
+function logDebug(msg, tipo) {
+  const logs = document.getElementById('debug-logs');
+  const div = document.createElement('div');
+  const hora = new Date().toLocaleTimeString('pt-PT', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  let cor = '#10b981';
+  if (tipo === 'erro') cor = '#ef4444';
+  if (tipo === 'aviso') cor = '#f59e0b';
+  if (tipo === 'ok') cor = '#3b82f6';
+  div.style.color = cor;
+  div.innerHTML = `<span style="opacity:0.6;">[${hora}]</span> ${msg}`;
+  logs.appendChild(div);
+  logs.scrollTop = logs.scrollHeight;
+  // Manter só últimos 50 logs
+  while (logs.children.length > 50) logs.removeChild(logs.firstChild);
+}
+
+// Sobrescrever console.log para também mostrar no painel
+const logOriginal = console.log;
+console.log = function(...args) {
+  logOriginal.apply(console, args);
+  logDebug(args.join(' '));
+};
+const erroOriginal = console.error;
+console.error = function(...args) {
+  erroOriginal.apply(console, args);
+  logDebug('❌ ' + args.join(' '), 'erro');
+};
+
+// Log de estado da conexão
+setInterval(() => {
+  if (!debugAtivo) return;
+  const numPeers = Object.keys(peers).length;
+  const numVideos = document.getElementById('alunos-grid').children.length;
+  const estados = Object.entries(peers).map(([id, pc]) => {
+    const estado = pc.connectionState?.slice(0,3) || '?';
+    const sinal = pc.signalingState?.slice(0,3) || '?';
+    return `${id.slice(0,4)}:${estado}/${sinal}`;
+  }).join(' ');
+  logDebug(`🔗 Peers:${numPeers} Vídeos:${numVideos} | ${estados}`, 'ok');
+}, 3000);
 </script>
+
+<!-- PAINEL DE DEBUG VISUAL -->
+<div id="debug-panel" style="position:fixed; bottom:70px; left:10px; right:10px; max-height:150px; overflow-y:auto; background:rgba(0,0,0,0.85); border:1px solid #10b981; border-radius:8px; padding:8px; z-index:9999; font-family:monospace; font-size:11px; color:#10b981; display:none;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; border-bottom:1px solid #10b981; padding-bottom:4px;">
+    <span style="font-weight:bold;">📋 LOGS</span>
+    <button onclick="document.getElementById('debug-panel').style.display='none'" style="background:#ef4444; color:white; border:none; border-radius:4px; padding:2px 8px; font-size:10px;">✕</button>
+  </div>
+  <div id="debug-logs" style="display:flex; flex-direction:column; gap:2px;"></div>
+</div>
+<button id="btn-debug" onclick="toggleDebug()" style="position:fixed; bottom:70px; right:10px; z-index:9999; background:#10b981; color:white; border:none; border-radius:50%; width:40px; height:40px; font-size:16px; opacity:0.7;">🐛</button>
+
 </body>
 </html>
