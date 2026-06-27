@@ -508,6 +508,15 @@ const msg = snapshot.val();
 adicionarChatMsg(msg.nome, msg.texto, msg.id === minhaId);
 });
 
+// Kick (remocao forcada)
+SALA_REF.child('kicks/' + minhaId).on('value', (snapshot) => {
+if (snapshot.exists()) {
+  alert('🚫 Foste removido da aula por ' + snapshot.val().by);
+  sairDaSala();
+  snapshot.ref.remove();
+}
+});
+
 // Atualizar lista e contador
 atualizarListaParticipantes();
 SALA_REF.child('participants').on('value', () => {
@@ -761,9 +770,12 @@ const isMe = child.key === minhaId;
 const mao = data.maoLevantada ? ' ✋' : '';
 const prof = data.isProfessor ? ' 👨‍🏫' : '';
 const me = isMe ? ' (Tu)' : '';
-html += `<div class="participant-item">
-<span>${data.isProfessor ? '👨‍🏫' : '👤'}</span>
-<span class="text-sm ${data.isProfessor ? 'text-emerald-400 font-bold' : ''}">${data.nome}${prof}${me}${mao}</span>
+html += `<div class="participant-item" style="justify-content:space-between;">
+<div style="display:flex; align-items:center; gap:8px;">
+  <span>${data.isProfessor ? '👨‍🏫' : '👤'}</span>
+  <span class="text-sm ${data.isProfessor ? 'text-emerald-400 font-bold' : ''}">${data.nome}${prof}${me}${mao}</span>
+</div>
+${(souProfessor && !data.isProfessor && !isMe) ? `<button onclick="removerParticipante('${child.key}', '${data.nome}')" style="background:#ef4444; color:white; border:none; border-radius:4px; padding:2px 8px; font-size:11px; cursor:pointer;">🚫 Remover</button>` : ''}
 </div>`;
 });
 
@@ -923,6 +935,20 @@ document.getElementById('chat-messages-mobile').scrollTop = document.getElementB
 }
 
 // ========== SAIR ==========
+function removerParticipante(peerId, nome) {
+  if (!souProfessor) return;
+  if (!confirm('Remover ' + nome + ' da aula?')) return;
+  console.log('🚫 Professor removeu:', nome, peerId);
+  SALA_REF.child('participants/' + peerId).remove();
+  SALA_REF.child('signals/' + peerId).remove();
+  SALA_REF.child('kicks/' + peerId).set({ by: meuNome, time: Date.now() });
+  if (peers[peerId]) { peers[peerId].close(); delete peers[peerId]; }
+  removerVideoAluno(peerId);
+  atualizarListaParticipantes();
+  atualizarContador();
+  logDebug('🚫 ' + nome + ' removido', 'aviso');
+}
+
 function sairDaSala() {
 if (isRecording) pararGravacao();
 if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
@@ -933,6 +959,7 @@ peers = {};
 
 SALA_REF.child('participants/' + minhaId).remove();
 SALA_REF.child('signals/' + minhaId).remove();
+SALA_REF.child('kicks/' + minhaId).remove();
 if (souProfessor) { SALA_REF.child('professor').remove(); }
 SALA_REF.off();
 
